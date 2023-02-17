@@ -61,8 +61,8 @@ class DetectorAPI:
 
     def warp(self,img, src, dst):
         """i will write documentation later"""
-        # src = np.float32([src])
-        # dst = np.float32([dst])
+        src = np.float32([src])
+        dst = np.float32([dst])
         return cv2.warpPerspective(img, cv2.getPerspectiveTransform(src, dst),
                                 dsize=img.shape[0:2][::-1], flags=cv2.INTER_LINEAR)
 
@@ -351,46 +351,46 @@ class DetectorAPI:
     def Detect(self,frame):
         """i will write documentation later"""
         #-------------------------Color & Gradient Threshold------------------------ 
-        image = cv2.resize(frame,(640,480),interpolation=cv2.INTER_AREA)
-        edges = self.color(image)
+        # image = cv2.resize(frame,(640,480),interpolation=cv2.INTER_AREA)
+        # edges = self.color(image)
         #edges1 = canny(image)
         # edges2=self.sobel_binary(image)
         
         # A= cv2.addWeighted(edges2,0.7,edges,0.3,0)
         # BW1=cv2.bitwise_and(A, edges2)
-        img_b=self.region_of_interest(edges)
+
+        segmented = self.segmented(frame)
+        img_b=self.region_of_interest(segmented)
 
     # ---------------------------- Perspective Transform --------------------------
 
 
         # All points are in format [cols, rows]
-        pt_A = [220, 300]                       #left up
+        pt_A = [20, 300]                       #left up
         pt_B = [0, img_b.shape[1]]              #left down
         pt_C = [img_b.shape[0],img_b.shape[1]]  #right down
         pt_D = [450, 300]                       #right up 
        
 
         # Here, I have used L2 norm. You can use L1 also.
-        width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
-        width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
-        maxWidth = max(int(width_AD), int(width_BC))
+        # width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
+        # width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
+        # maxWidth = max(int(width_AD), int(width_BC))
 
-        height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
-        height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
-        maxHeight = max(int(height_AB), int(height_CD))
+        # height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
+        # height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
+        # maxHeight = max(int(height_AB), int(height_CD))
 
 
-        src = np.float32([pt_A, pt_B, pt_C, pt_D])
-        dst = np.float32([[0, 0],
-                        [0, img_b.shape[1] - 1],
-                        [img_b.shape[0] - 1, img_b.shape[1] - 1],
-                        [img_b.shape[0] - 1, 0]])
+        src = [pt_A, pt_B, pt_C, pt_D]
+
+        dst = [0, 0], [0, img_b.shape[1] - 1], [img_b.shape[0] - 1, img_b.shape[1] - 1], [img_b.shape[0] - 1, 0]
         
         #src = [595, 500], [685, 500],[1110,img_b.shape[0]],[220, img_b.shape[0]]
-         
-        img_w = cv2.warpPerspective(img_b, cv2.getPerspectiveTransform(src, dst),
-                               (img_b.shape[0],img_b.shape[1]), flags=cv2.INTER_LINEAR)
-        # img_w = self.warp(img_b, src, dst)
+
+        # img_w = cv2.warpPerspective(img_b, cv2.getPerspectiveTransform(src, dst),
+        #                        img_b.shape[0:2][::-1], flags=cv2.INTER_LINEAR)
+        img_w = self.warp(img_b, src, dst)
         # try:
         #     left_fit, right_fit = self.fit_from_lines(left_fit, right_fit, img_w)
         #     mov_avg_left = np.append(mov_avg_left,np.array([left_fit]), axis=0)
@@ -420,14 +420,24 @@ class DetectorAPI:
         # final[0:240, 0:240] = steer
 
         #out.write(final)
+        
         cv2.imshow('front_view', frame)
-        cv2.imshow('canny', edges)
+        # cv2.imshow('canny', edges)
         # cv2.imshow('sobel', edges2)
         cv2.imshow('ROI', img_b)
         cv2.imshow('Sky_view', img_w)
         # cv2.imshow('final', final)
         #cv2.imshow("steering wheel", dst)
 
+
+    def segmented(self,bgr_image):
+        lower_rgb=np.array([50,50,165],dtype="uint8")
+        upper_rgb=np.array([70,70,190],dtype="uint8")    
+        skin_region=cv2.inRange(bgr_image,lower_rgb,upper_rgb)
+        bgr=cv2.erode(skin_region,np.ones((4,4), np.uint8))
+        cv2.imshow("segmented",bgr)
+        
+        return skin_region
 
 
 
