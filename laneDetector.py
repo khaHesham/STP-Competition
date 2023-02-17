@@ -14,17 +14,17 @@ class DetectorAPI:
     def color(self,inpImage): 
         """i will write documentation later"""
         # Apply HLS color filtering to filter out white lane lines
-        hls = cv2.cvtColor(inpImage, cv2.COLOR_BGR2HLS)
-        lower_white = np.array([0, 160, 10])
-        upper_white = np.array([255, 255, 255])
-        mask = cv2.inRange(inpImage, lower_white, upper_white)
-        hls_result = cv2.bitwise_and(inpImage, inpImage, mask = mask)
+        # hls = cv2.cvtColor(inpImage, cv2.COLOR_BGR2HLS)
+        # lower_white = np.array([0, 160, 10])
+        # upper_white = np.array([160, 255, 255])
+        # mask = cv2.inRange(inpImage, lower_white, upper_white)
+        # hls_result = cv2.bitwise_and(inpImage, inpImage, mask = mask)
         
         # Convert image to grayscale, apply threshold, blur & extract edges
-        gray = cv2.cvtColor(hls_result, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(gray, 180, 255, cv2.THRESH_BINARY)
+        gray = cv2.cvtColor(inpImage, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
         blur = cv2.GaussianBlur(thresh,(3, 3), 11)
-        canny = cv2.Canny(blur, 40, 60)
+        canny = cv2.Canny(blur, 10, 20)
         return canny
 
     def sobel_binary(self,img, sobel_kernel=7, mag_thresh=(3, 255), s_thresh=(170, 255)):
@@ -53,15 +53,16 @@ class DetectorAPI:
     def region_of_interest(self,img):
         mask = np.zeros_like(img)
         imshape=img.shape
-        vertices = np.array([[(150,imshape[0]),(590, 440), (680, 440), (imshape[1]-20,imshape[0])]], dtype=np.int32)
+        # vertices = np.array([[(150,imshape[0]),(590, 440), (680, 440), (imshape[1]-20,imshape[0])]], dtype=np.int32)
+        vertices = np.array([[(0,imshape[1]),(0, 260), (640, 260), (imshape[0],imshape[1])]], dtype=np.int32)  # half window rectangle
         cv2.fillPoly(mask, vertices, 255)
         masked_image = cv2.bitwise_and(img, mask)
         return masked_image
 
     def warp(self,img, src, dst):
         """i will write documentation later"""
-        src = np.float32([src])
-        dst = np.float32([dst])
+        # src = np.float32([src])
+        # dst = np.float32([dst])
         return cv2.warpPerspective(img, cv2.getPerspectiveTransform(src, dst),
                                 dsize=img.shape[0:2][::-1], flags=cv2.INTER_LINEAR)
 
@@ -346,6 +347,90 @@ class DetectorAPI:
                 break
         cap.release()
         cv2.destroyAllWindows()
+
+    def Detect(self,frame):
+        """i will write documentation later"""
+        #-------------------------Color & Gradient Threshold------------------------ 
+        image = cv2.resize(frame,(640,480),interpolation=cv2.INTER_AREA)
+        edges = self.color(image)
+        #edges1 = canny(image)
+        # edges2=self.sobel_binary(image)
+        
+        # A= cv2.addWeighted(edges2,0.7,edges,0.3,0)
+        # BW1=cv2.bitwise_and(A, edges2)
+        img_b=self.region_of_interest(edges)
+
+    # ---------------------------- Perspective Transform --------------------------
+
+
+        # All points are in format [cols, rows]
+        pt_A = [220, 300]                       #left up
+        pt_B = [0, img_b.shape[1]]              #left down
+        pt_C = [img_b.shape[0],img_b.shape[1]]  #right down
+        pt_D = [450, 300]                       #right up 
+       
+
+        # Here, I have used L2 norm. You can use L1 also.
+        width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
+        width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
+        maxWidth = max(int(width_AD), int(width_BC))
+
+        height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
+        height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
+        maxHeight = max(int(height_AB), int(height_CD))
+
+
+        src = np.float32([pt_A, pt_B, pt_C, pt_D])
+        dst = np.float32([[0, 0],
+                        [0, img_b.shape[1] - 1],
+                        [img_b.shape[0] - 1, img_b.shape[1] - 1],
+                        [img_b.shape[0] - 1, 0]])
+        
+        #src = [595, 500], [685, 500],[1110,img_b.shape[0]],[220, img_b.shape[0]]
+         
+        img_w = cv2.warpPerspective(img_b, cv2.getPerspectiveTransform(src, dst),
+                               (img_b.shape[0],img_b.shape[1]), flags=cv2.INTER_LINEAR)
+        # img_w = self.warp(img_b, src, dst)
+        # try:
+        #     left_fit, right_fit = self.fit_from_lines(left_fit, right_fit, img_w)
+        #     mov_avg_left = np.append(mov_avg_left,np.array([left_fit]), axis=0)
+        #     mov_avg_right = np.append(mov_avg_right,np.array([right_fit]), axis=0)
+            
+        # except Exception:
+        #     left_fit, right_fit = self.sliding_windown(img_w)
+        #     mov_avg_left = np.array([left_fit])
+        #     mov_avg_right = np.array([right_fit])
+
+        # left_fit = np.array([np.mean(mov_avg_left[::-1][:,0][0:self.MOV_AVG_LENGTH]),
+        #                     np.mean(mov_avg_left[::-1][:,1][0:self.MOV_AVG_LENGTH]),
+        #                     np.mean(mov_avg_left[::-1][:,2][0:self.MOV_AVG_LENGTH])])
+        # right_fit = np.array([np.mean(mov_avg_right[::-1][:,0][0:self.MOV_AVG_LENGTH]),
+        #                     np.mean(mov_avg_right[::-1][:,1][0:self.MOV_AVG_LENGTH]),
+        #                     np.mean(mov_avg_right[::-1][:,2][0:self.MOV_AVG_LENGTH])])
+        # if mov_avg_left.shape[0] > 1000:
+        #     mov_avg_left = mov_avg_left[0:self.MOV_AVG_LENGTH]
+        # if mov_avg_right.shape[0] > 1000:
+        #     mov_avg_right = mov_avg_right[0:self.MOV_AVG_LENGTH]
+            
+        # final,degrees = self.draw_lines(frame, img_w, left_fit, right_fit, perspective=[src,dst])    
+        # self.smoothed_angle += 0.2 * pow(abs((degrees - self.smoothed_angle)), 2.0 / 3.0) * (degrees - self.smoothed_angle) / abs(degrees - self.smoothed_angle)
+        # # M = cv2.getRotationMatrix2D((scols/2,srows/2),-self.smoothed_angle,1)
+        # dst = cv2.warpAffine(swheel,M,(scols,srows)) 
+        # steer=text(dst,-self.smoothed_angle)
+        # final[0:240, 0:240] = steer
+
+        #out.write(final)
+        cv2.imshow('front_view', frame)
+        cv2.imshow('canny', edges)
+        # cv2.imshow('sobel', edges2)
+        cv2.imshow('ROI', img_b)
+        cv2.imshow('Sky_view', img_w)
+        # cv2.imshow('final', final)
+        #cv2.imshow("steering wheel", dst)
+
+
+
+
 
 
 def main():

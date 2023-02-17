@@ -30,7 +30,7 @@ class FPSCounter:
         return count / n_seconds
 
 
-def run_car(simulator: Simulator) -> None:
+def run_car(simulator: Simulator) -> None:   # 170,55,55
     """
     Function to control the car using keyboard
 
@@ -62,8 +62,14 @@ def run_car(simulator: Simulator) -> None:
         2,
         cv2.LINE_AA,
     )
-    cv2.imshow("image", img)
+    cv2.imshow("image", img)  # 640 * 480
     cv2.waitKey(1)
+
+    API = ld.DetectorAPI()
+
+    # Testing our Interface with API
+    # API.Run()  [dont run unless u want to see the same video i uploaded on whatsapp]
+    API.Detect(img)
 
     # Control the car using keyboard
     steering = 0
@@ -123,6 +129,7 @@ def AutoPilot(simulator: Simulator) -> None:
 
     # Testing our Interface with API
     # API.Run()  [dont run unless u want to see the same video i uploaded on whatsapp]
+    API.Detect(img)
 
     
     """
@@ -156,7 +163,7 @@ if __name__ == "__main__":
     judge = Judge(team_code="your_new_team_code", zip_file_path="your_solution.zip")
 
     # Pass the function that contains your main solution to the judge
-    judge.set_run_hook(AutoPilot)
+    judge.set_run_hook(run_car)
 
     # Start the judge and simulation
     judge.run(send_score=False, verbose=True)
