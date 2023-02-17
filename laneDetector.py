@@ -54,7 +54,7 @@ class DetectorAPI:
         mask = np.zeros_like(img)
         imshape=img.shape
         # vertices = np.array([[(150,imshape[0]),(590, 440), (680, 440), (imshape[1]-20,imshape[0])]], dtype=np.int32)
-        vertices = np.array([[(0,imshape[1]),(0, 260), (640, 260), (imshape[0],imshape[1])]], dtype=np.int32)  # half window rectangle
+        vertices = np.array([[(0,imshape[1]),(0, 260), (imshape[0], 260), (imshape[0],imshape[1])]], dtype=np.int32)  # half window rectangle
         cv2.fillPoly(mask, vertices, 255)
         masked_image = cv2.bitwise_and(img, mask)
         return masked_image
@@ -263,7 +263,7 @@ class DetectorAPI:
             cv2.putText(result, line, (0,i), cv2.FONT_HERSHEY_DUPLEX, 0.5,(255,255,255),1,cv2.LINE_AA)
         return result,radius
 
-    def text(img,angle):
+    def text(self,img,angle):
         """i will write documentation later"""
         mask = np.zeros_like(img)
         cv2.putText(img,str(round(angle)),(100,70), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,0),2,cv2.LINE_AA)
@@ -359,66 +359,51 @@ class DetectorAPI:
         # A= cv2.addWeighted(edges2,0.7,edges,0.3,0)
         # BW1=cv2.bitwise_and(A, edges2)
 
-        segmented = self.segmented(frame)
-        img_b=self.region_of_interest(segmented)
+        img_b = self.segmented(frame)
+        # img_b=self.region_of_interest(segmented)
 
     # ---------------------------- Perspective Transform --------------------------
 
-
         # All points are in format [cols, rows]
-        pt_A = [20, 300]                       #left up
+        pt_A = [0, 300]                       #left up
         pt_B = [0, img_b.shape[1]]              #left down
         pt_C = [img_b.shape[0],img_b.shape[1]]  #right down
-        pt_D = [450, 300]                       #right up 
+        pt_D = [img_b.shape[0], 300]                       #right up 
        
-
-        # Here, I have used L2 norm. You can use L1 also.
-        # width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
-        # width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
-        # maxWidth = max(int(width_AD), int(width_BC))
-
-        # height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
-        # height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
-        # maxHeight = max(int(height_AB), int(height_CD))
-
-
         src = [pt_A, pt_B, pt_C, pt_D]
 
         dst = [0, 0], [0, img_b.shape[1] - 1], [img_b.shape[0] - 1, img_b.shape[1] - 1], [img_b.shape[0] - 1, 0]
-        
-        #src = [595, 500], [685, 500],[1110,img_b.shape[0]],[220, img_b.shape[0]]
 
-        # img_w = cv2.warpPerspective(img_b, cv2.getPerspectiveTransform(src, dst),
-        #                        img_b.shape[0:2][::-1], flags=cv2.INTER_LINEAR)
         img_w = self.warp(img_b, src, dst)
-        # try:
-        #     left_fit, right_fit = self.fit_from_lines(left_fit, right_fit, img_w)
-        #     mov_avg_left = np.append(mov_avg_left,np.array([left_fit]), axis=0)
-        #     mov_avg_right = np.append(mov_avg_right,np.array([right_fit]), axis=0)
+        # ---------------------------- Steering Angle Calculations -------------------------- 
+        try:
+            left_fit, right_fit = self.fit_from_lines(left_fit, right_fit, img_w)
+            mov_avg_left = np.append(mov_avg_left,np.array([left_fit]), axis=0)
+            mov_avg_right = np.append(mov_avg_right,np.array([right_fit]), axis=0)
             
-        # except Exception:
-        #     left_fit, right_fit = self.sliding_windown(img_w)
-        #     mov_avg_left = np.array([left_fit])
-        #     mov_avg_right = np.array([right_fit])
+        except Exception:
+            left_fit, right_fit = self.sliding_windown(img_w)
+            mov_avg_left = np.array([left_fit])
+            mov_avg_right = np.array([right_fit])
 
-        # left_fit = np.array([np.mean(mov_avg_left[::-1][:,0][0:self.MOV_AVG_LENGTH]),
-        #                     np.mean(mov_avg_left[::-1][:,1][0:self.MOV_AVG_LENGTH]),
-        #                     np.mean(mov_avg_left[::-1][:,2][0:self.MOV_AVG_LENGTH])])
-        # right_fit = np.array([np.mean(mov_avg_right[::-1][:,0][0:self.MOV_AVG_LENGTH]),
-        #                     np.mean(mov_avg_right[::-1][:,1][0:self.MOV_AVG_LENGTH]),
-        #                     np.mean(mov_avg_right[::-1][:,2][0:self.MOV_AVG_LENGTH])])
-        # if mov_avg_left.shape[0] > 1000:
-        #     mov_avg_left = mov_avg_left[0:self.MOV_AVG_LENGTH]
-        # if mov_avg_right.shape[0] > 1000:
-        #     mov_avg_right = mov_avg_right[0:self.MOV_AVG_LENGTH]
+        left_fit = np.array([np.mean(mov_avg_left[::-1][:,0][0:self.MOV_AVG_LENGTH]),
+                            np.mean(mov_avg_left[::-1][:,1][0:self.MOV_AVG_LENGTH]),
+                            np.mean(mov_avg_left[::-1][:,2][0:self.MOV_AVG_LENGTH])])
+        right_fit = np.array([np.mean(mov_avg_right[::-1][:,0][0:self.MOV_AVG_LENGTH]),
+                            np.mean(mov_avg_right[::-1][:,1][0:self.MOV_AVG_LENGTH]),
+                            np.mean(mov_avg_right[::-1][:,2][0:self.MOV_AVG_LENGTH])])
+        if mov_avg_left.shape[0] > 1000:
+            mov_avg_left = mov_avg_left[0:self.MOV_AVG_LENGTH]
+        if mov_avg_right.shape[0] > 1000:
+            mov_avg_right = mov_avg_right[0:self.MOV_AVG_LENGTH]
             
-        # final,degrees = self.draw_lines(frame, img_w, left_fit, right_fit, perspective=[src,dst])    
-        # self.smoothed_angle += 0.2 * pow(abs((degrees - self.smoothed_angle)), 2.0 / 3.0) * (degrees - self.smoothed_angle) / abs(degrees - self.smoothed_angle)
+        final,degrees = self.draw_lines(frame, img_w, left_fit, right_fit, perspective=[src,dst])    
+        self.smoothed_angle += 0.2 * pow(abs((degrees - self.smoothed_angle)), 2.0 / 3.0) * (degrees - self.smoothed_angle) / abs(degrees - self.smoothed_angle)
         # # M = cv2.getRotationMatrix2D((scols/2,srows/2),-self.smoothed_angle,1)
         # dst = cv2.warpAffine(swheel,M,(scols,srows)) 
-        # steer=text(dst,-self.smoothed_angle)
+        # steer=self.text(dst,-self.smoothed_angle)
         # final[0:240, 0:240] = steer
-
+        print(self.smoothed_angle)
         #out.write(final)
         
         cv2.imshow('front_view', frame)
@@ -426,7 +411,7 @@ class DetectorAPI:
         # cv2.imshow('sobel', edges2)
         cv2.imshow('ROI', img_b)
         cv2.imshow('Sky_view', img_w)
-        # cv2.imshow('final', final)
+        cv2.imshow('final', final)
         #cv2.imshow("steering wheel", dst)
 
 
@@ -434,7 +419,7 @@ class DetectorAPI:
         lower_rgb=np.array([50,50,165],dtype="uint8")
         upper_rgb=np.array([70,70,190],dtype="uint8")    
         skin_region=cv2.inRange(bgr_image,lower_rgb,upper_rgb)
-        bgr=cv2.erode(skin_region,np.ones((4,4), np.uint8))
+        bgr=cv2.erode(skin_region,np.ones((5,5), np.uint8))
         cv2.imshow("segmented",bgr)
         
         return skin_region
