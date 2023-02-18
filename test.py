@@ -45,7 +45,7 @@ def segmented(bgr_image):
     upper_rgb=np.array([70,70,190],dtype="uint8")    
     skin_region=cv2.inRange(bgr_image,lower_rgb,upper_rgb)
     bgr=cv2.erode(skin_region,np.ones((5,5), np.uint8))
-    # cv2.imshow("segmented",bgr)
+    cv2.imshow("segmented",bgr)
     
     return bgr
 
@@ -351,25 +351,27 @@ def run_car(simulator: Simulator) -> None:   # 170,55,55
     # yarab.yarab(img)
     steering_angle,heading_image = Pilot(img)
 
+    
+
 
     # Control the car using keyboard
-    # steering = 0
-    # if keyboard.is_pressed("a"):
-    #     steering = 1
-    # elif keyboard.is_pressed("d"):
-    #     steering = -1
+    steering = 0
+    if keyboard.is_pressed("a"):
+        steering = 1
+    elif keyboard.is_pressed("d"):
+        steering = -1
 
-    # throttle = 0
-    # if keyboard.is_pressed("w"):
-    #     throttle = 1
-    # elif keyboard.is_pressed("s"):
-    #     throttle = -1
+    throttle = 0
+    if keyboard.is_pressed("w"):
+        throttle = 1
+    elif keyboard.is_pressed("s"):
+        throttle = -1
 
-    # simulator.set_car_steering(steering * simulator.max_steer_angle / 1.7)
-    # simulator.set_car_velocity(throttle * 25)
+    simulator.set_car_steering(steering * simulator.max_steer_angle / 1.7)
+    simulator.set_car_velocity(throttle * 25)
 
-    #set throttle
-    simulator.set_car_velocity(2)
+    # #set throttle
+    # simulator.set_car_velocity(1)
 
     #PD controller
     counter = counter + 1
@@ -386,184 +388,189 @@ def run_car(simulator: Simulator) -> None:   # 170,55,55
     proportional = kp * error
     PD = int(steering + derivative + proportional)
     steering = abs(PD)
-    print("steering: " + str(steering))   
+    # print("steering: " + str(steering))   
     p_response.append(proportional)
     d_response.append(derivative) 
 
 
+    print("steering angle  " + str(steering_angle), "steering  " + str(steering))
+
     currAngle ,currSpeed = simulator.get_state()
+    # print("curr angle: "+str(currAngle))
+    # print("curr speed: "+str(currSpeed))
+
         
 
         #steering logic using PD values   -ve -> right    left <- +ve
     new_val = 7.5
 
     if counter%5==0:
-        if deviation < 15 and deviation > -15:
+        if deviation < 9 and deviation > -9:
             print("Not Steering")
-            print("Deviation: " + str(deviation))
+            # print("Deviation: " + str(deviation))
             new_val = 7.5
             deviation = 0
             error = 0
-            simulator.set_car_steering(0)         # No Steering
-            simulator.set_car_velocity(currSpeed + 0.5)
+            # simulator.set_car_steering(0)         # No Steering
+            # simulator.set_car_velocity(currSpeed + 0.5)
                 
 
         elif deviation > 50:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 3.5
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed - 0.5)
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 5.5
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed - 0.5)
             simulator.set_car_steering(new_val*np.pi/180)  
             
         elif deviation > 45:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 3.0
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)  
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 3.0
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)  
 
         elif deviation > 40:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 2.5
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)  
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 2.5
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)  
 
         elif deviation > 35:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 1.5
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180) 
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 1.5
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180) 
 
         elif deviation > 30:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 1.0
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # print("Deviation: " + str(deviation))
+            new_val =  -steering * 1.0
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)
 
         elif deviation > 25:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 0.5
-            print("right val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 0.6
+            # print("right val: " + str(new_val))
             # simulator.set_car_velocity(currSpeed -0.5)
-            simulator.set_car_steering(new_val*np.pi/180) 
+            # simulator.set_car_steering(new_val*np.pi/180) 
 
         elif deviation > 20:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * 0.3
-            print("right val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 0.5
+            # print("right val: " + str(new_val))
             # simulator.set_car_velocity(2)
-            simulator.set_car_steering(new_val*np.pi/180)  
+            # simulator.set_car_steering(new_val*np.pi/180)  
 
         elif deviation > 15:
             print("Steering Right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * -0.5
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed + .5)
-            simulator.set_car_steering(new_val*np.pi/180) 
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 0.1
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed + .5)
+            # simulator.set_car_steering(new_val*np.pi/180) 
 
         elif deviation > 10:
             print("Steering right")
-            print("Deviation: " + str(deviation))
-            new_val = 5 - steering * -1
-            print("right val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed + 1)
-            simulator.set_car_steering(new_val*np.pi/180 )  
+            # print("Deviation: " + str(deviation))
+            new_val = -steering * 0.05
+            # print("right val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed + 1)
+            # simulator.set_car_steering(new_val*np.pi/180 )  
             
         
         elif deviation < -50:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * 0.2
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = steering * 5.5
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)  
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)  
 
         elif deviation < -45:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * 0.1
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val =  steering * 3
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)
 
         elif deviation < -40:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * 0.03
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = steering * 2.5
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)
 
         elif deviation < -35:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * 0
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = steering * 1.5
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)
 
         elif deviation < -30:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * -0.3
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val =  steering * 1
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed - 0.5)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # simulator.set_car_velocity(currSpeed - 0.5)
+            # simulator.set_car_steering(new_val*np.pi/180)
 
         elif deviation < -25:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * -0.7
-            print("left val: " + str(new_val))
+            # print("Deviation: " + str(deviation))
+            new_val = steering * 0.5
+            # print("left val: " + str(new_val))
             throttle_speed = 3
             #   simulator.set_car_velocity(throttle_speed)
-            simulator.set_car_velocity(currSpeed + 1)
-            simulator.set_car_steering(new_val*np.pi/180)
+            # simulator.set_car_velocity(currSpeed + 1)
+            # simulator.set_car_steering(new_val*np.pi/180)
         
         elif deviation < -20:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * -1.0
-            print("left val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed + 1)
-            simulator.set_car_steering(new_val*np.pi/180 ) 
+            # print("Deviation: " + str(deviation))
+            new_val =  steering * 0.25
+            # print("left val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed + 1)
+            # simulator.set_car_steering(new_val*np.pi/180 ) 
 
         elif deviation < -15:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * - 1.1
-            print("left val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed + 1)
-            simulator.set_car_steering(new_val*np.pi/180 ) 
+            # print("Deviation: " + str(deviation))
+            new_val = steering *  0.01
+            # print("left val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed + 1)
+            # simulator.set_car_steering(new_val*np.pi/180 ) 
 
         elif deviation < -10:
             print("Steering Left")
-            print("Deviation: " + str(deviation))
-            new_val = 5 + steering * - 1.2
-            print("left val: " + str(new_val))
-            simulator.set_car_velocity(currSpeed + 1)
-            simulator.set_car_steering(new_val*np.pi/180)  
+            # print("Deviation: " + str(deviation))
+            new_val = steering * 0.005
+            # print("left val: " + str(new_val))
+            # simulator.set_car_velocity(currSpeed + 1)
+            # simulator.set_car_steering(new_val*np.pi/180)  
 
       
     # #append lists
