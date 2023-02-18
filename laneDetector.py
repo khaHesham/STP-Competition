@@ -79,7 +79,7 @@ class DetectorAPI:
         rightx_base = np.argmax(histogram[midpoint:]) + midpoint
 
         # Choose the number of sliding windows
-        nwindows = 9
+        nwindows = 20
         # Set height of windows
         window_height = int(img_w.shape[0] / nwindows)
         # Identify the x and y positions of all nonzero pixels in the image
@@ -244,7 +244,7 @@ class DetectorAPI:
         else:
             curve_direction = 'Straight'
             radius=5729.57795/radius1
-
+        # print(radius)
         # ----- Off Center Calculation ------ #
 
         lane_width = (right_fit[2] - left_fit[2]) * xm_per_pix
@@ -375,7 +375,7 @@ class DetectorAPI:
         dst = [0, 0], [0, img_b.shape[1] - 1], [img_b.shape[0] - 1, img_b.shape[1] - 1], [img_b.shape[0] - 1, 0]
 
         img_w = self.warp(img_b, src, dst)
-        # ---------------------------- Steering Angle Calculations -------------------------- 
+        #--------------------------- Steering Angle Calculations -------------------------- 
         try:
             left_fit, right_fit = self.fit_from_lines(left_fit, right_fit, img_w)
             mov_avg_left = np.append(mov_avg_left,np.array([left_fit]), axis=0)
@@ -406,14 +406,15 @@ class DetectorAPI:
         print(self.smoothed_angle)
         #out.write(final)
         
-        cv2.imshow('front_view', frame)
-        # cv2.imshow('canny', edges)
-        # cv2.imshow('sobel', edges2)
-        cv2.imshow('ROI', img_b)
-        cv2.imshow('Sky_view', img_w)
-        cv2.imshow('final', final)
-        #cv2.imshow("steering wheel", dst)
+        # cv2.imshow('front_view', frame)
+        # # cv2.imshow('canny', edges)
+        # # cv2.imshow('sobel', edges2)
+        # cv2.imshow('ROI', img_b)
+        # cv2.imshow('Sky_view', img_w)
+        # cv2.imshow('final', final)
+        # cv2.imshow("steering wheel", dst)
 
+        return frame,img_b,img_w,final,self.smoothed_angle
 
     def segmented(self,bgr_image):
         lower_rgb=np.array([50,50,165],dtype="uint8")
@@ -422,7 +423,7 @@ class DetectorAPI:
         bgr=cv2.erode(skin_region,np.ones((5,5), np.uint8))
         cv2.imshow("segmented",bgr)
         
-        return skin_region
+        return bgr
 
 
 
